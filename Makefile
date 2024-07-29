@@ -20,7 +20,7 @@ TARGET		:=	$(shell basename $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	source
 DATA		:=	
-INCLUDES	:=
+INCLUDES	:=  library/minivmac/cfg library/minivmac/src
 
 #---------------------------------------------------------------------------------
 # options for code generation

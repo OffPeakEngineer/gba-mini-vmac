@@ -1,3 +1,4 @@
 gba-mini-vmac.elf
 gba-mini-vmac.gba
 build
+library/SDL
