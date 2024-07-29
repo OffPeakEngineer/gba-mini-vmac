@@ -5,12 +5,16 @@
 #include <gba_systemcalls.h>
 
 #include <stdio.h>
+#include "entry.h"
+
+int hit = 0;
 
 //---------------------------------------------------------------------------------
 // Program entry point
 //---------------------------------------------------------------------------------
 int main(void) {
 //---------------------------------------------------------------------------------
+	hit = entry();
 
 	// the vblank interrupt must be enabled for VBlankIntrWait() to work
 	// since the default dispatcher handles the bios flags no vblank handler
@@ -26,7 +30,11 @@ int main(void) {
 
 	// ansi escape sequence to set print co-ordinates
 	// /x1b[line;columnH
-	iprintf("\x1b[10;10HHello World!");
+	if (hit == 1) {
+		iprintf("\x1b[10;10HHello World!");
+	} else {
+		iprintf("\x1b[10;10HOther World!");
+	}
 
 	// ansi escape sequence to move cursor up
 	// /x1b[linesA
