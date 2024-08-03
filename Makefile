@@ -19,7 +19,7 @@ include $(DEVKITARM)/gba_rules
 TARGET		:=	$(shell basename $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	source
-DATA		:=	
+DATA		:=	data
 INCLUDES	:=  library/minivmac/cfg library/minivmac/src
 
 #---------------------------------------------------------------------------------

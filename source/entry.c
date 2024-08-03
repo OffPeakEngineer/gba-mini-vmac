@@ -1,37 +1,10 @@
 #include "entry.h"
 
-#include <stdint.h>
 
-#include "../library/SDL/include/SDL_events.h"
 #include "../library/minivmac/src/STRCNENG.h"
 #include "../library/minivmac/cfg/CNFGGLOB.h"
 
-typedef char SDL_keysym;
-typedef uint32_t Uint32;
-typedef uint8_t Uint8;
-typedef uint16_t Uint16;
 
-typedef struct SDL_SurfaceData SDL_SurfaceData;
-
-#define AUDIO_U8 0x0008
-#define SDL_KEYUP 0x00
-#define SDL_KEYDOWN 0x01
-#define SDL_MOUSEBUTTONUP 0x02
-#define SDL_MOUSEBUTTONDOWN 0x03
-#define SDL_MOUSEMOTION 0x04
-#define SDL_APPMOUSEFOCUS 0x05
-#define SDL_APPINPUTFOCUS 0x06
-#define SDL_ACTIVEEVENT 0x07
-#define SDL_QUIT 0x08
-
-#define SDL_INIT_AUDIO 0x00
-#define SDL_INIT_VIDEO 0x01
-#define SDL_INIT_TIMER 0x02
-#define SDL_GRAB_ON 1
-#define SDL_GRAB_OFF 0
-#define SDL_FULLSCREEN 1
-#define SDL_DISABLE 0
-#define SDL_ENABLE 1
 
 int entry()
 {
@@ -55,9 +28,9 @@ const char *SDL_GetError()
   return "Who knows!\0";
 }
 
-ui3r SDLKey2MacKeyCode(char sym){
+// ui3r SDLKey2MacKeyCode(SDLKey sym){
 
-}
+// }
 
 int SDL_GetTicks() {
   return 0;
