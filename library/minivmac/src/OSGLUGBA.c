@@ -20,9 +20,7 @@
 #include "CNFGRAPI.h"
 #include "SYSDEPNS.h"
 #include "ENDIANAC.h"
-
 #include "MYOSGLUE.h"
-
 #include "STRCONST.h"
 
 /* --- some simple utilities --- */
@@ -33,62 +31,13 @@ GLOBALOSGLUPROC MyMoveBytes(anyp srcPtr, anyp destPtr, si5b byteCount)
 }
 
 /* --- control mode and internationalization --- */
-
 #define NeedCell2PlainAsciiMap 1
-
 #include "INTLCHAR.h"
-
-/* --- sending debugging info to file --- */
-
-#if dbglog_HAVE
-
-#define dbglog_ToStdErr 0
-
-#if ! dbglog_ToStdErr
-LOCALVAR FILE *dbglog_File = NULL;
-#endif
-
-LOCALFUNC blnr dbglog_open0(void)
-{
-#if dbglog_ToStdErr
-	return trueblnr;
-#else
-	dbglog_File = fopen("dbglog.txt", "w");
-	return (NULL != dbglog_File);
-#endif
-}
-
-LOCALPROC dbglog_write0(char *s, uimr L)
-{
-#if dbglog_ToStdErr
-	(void) fwrite(s, 1, L, stderr);
-#else
-	if (dbglog_File != NULL) {
-		(void) fwrite(s, 1, L, dbglog_File);
-	}
-#endif
-}
-
-LOCALPROC dbglog_close0(void)
-{
-#if ! dbglog_ToStdErr
-	if (dbglog_File != NULL) {
-		fclose(dbglog_File);
-		dbglog_File = NULL;
-	}
-#endif
-}
-
-#endif
 
 /* --- information about the environment --- */
 
-#define WantColorTransValid 0
-
 #include "COMOSGLU.h"
-
 #include "PBUFSTDC.h"
-
 #include "CONTROLM.h"
 
 /* --- text translation --- */
@@ -344,29 +293,15 @@ LOCALFUNC blnr LoadMacRom(void)
 
 /* --- video out --- */
 
-#if VarFullScreen
 LOCALVAR blnr UseFullScreen = (WantInitFullScreen != 0);
-#endif
-
-#if EnableMagnify
-LOCALVAR blnr UseMagnify = (WantInitMagnify != 0);
-#endif
-
 LOCALVAR blnr gBackgroundFlag = falseblnr;
 LOCALVAR blnr gTrueBackgroundFlag = falseblnr;
 LOCALVAR blnr CurSpeedStopped = trueblnr;
 
-#if EnableMagnify
-#define MaxScale MyWindowScale
-#else
 #define MaxScale 1
-#endif
-
 
 LOCALVAR SDL_Surface *my_surface = nullpr;
-
 LOCALVAR ui3p ScalingBuff = nullpr;
-
 LOCALVAR ui3p CLUT_final;
 
 #define CLUT_finalsz (256 * 8 * 4 * MaxScale)
@@ -374,7 +309,6 @@ LOCALVAR ui3p CLUT_final;
 		256 possible values of one byte
 		8 pixels per byte maximum (when black and white)
 		4 bytes per destination pixel maximum
-			multiplied by MyWindowScale if EnableMagnify
 	*/
 
 #define ScrnMapr_DoMap UpdateBWDepth3Copy
@@ -513,15 +447,6 @@ LOCALPROC HaveChangedScreenBuff(ui4r top, ui4r left,
 	ui5r bottom2 = bottom;
 	ui5r right2 = right;
 
-#if EnableMagnify
-	if (UseMagnify) {
-		top2 *= MyWindowScale;
-		left2 *= MyWindowScale;
-		bottom2 *= MyWindowScale;
-		right2 *= MyWindowScale;
-	}
-#endif
-
 	// if (SDL_MUSTLOCK(my_surface)) {
 	// 	if (SDL_LockSurface(my_surface) < 0) {
 	// 		return;
@@ -532,12 +457,6 @@ LOCALPROC HaveChangedScreenBuff(ui4r top, ui4r left,
 
 	int bpp = 0; //my_surface->format->BytesPerPixel;
 	ui5r ExpectedPitch = vMacScreenWidth * bpp;
-
-#if EnableMagnify
-	if (UseMagnify) {
-		ExpectedPitch *= MyWindowScale;
-	}
-#endif
 
 #if 0 != vMacScreenDepth
 	if (UseColorMode) {
@@ -567,9 +486,6 @@ LOCALPROC HaveChangedScreenBuff(ui4r top, ui4r left,
 	{
 		int k;
 		Uint32 v;
-#if EnableMagnify
-		int a;
-#endif
 		int PixPerByte =
 #if (0 != vMacScreenDepth) && (vMacScreenDepth < 4)
 			UseColorMode ? (1 << (3 - vMacScreenDepth)) :
@@ -596,9 +512,6 @@ LOCALPROC HaveChangedScreenBuff(ui4r top, ui4r left,
 					v = BWLUT_pixel[(i >> k) & 1];
 				}
 
-#if EnableMagnify
-				for (a = UseMagnify ? MyWindowScale : 1; --a >= 0; )
-#endif
 				{
 					switch (bpp) {
 						case 1: /* Assuming 8-bpp */
@@ -621,24 +534,6 @@ LOCALPROC HaveChangedScreenBuff(ui4r top, ui4r left,
 
 #if (0 != vMacScreenDepth) && (vMacScreenDepth < 4)
 		if (UseColorMode) {
-#if EnableMagnify
-			if (UseMagnify) {
-				switch (bpp) {
-					case 1:
-						UpdateColorDepth3ScaledCopy(
-							top, left, bottom, right);
-						break;
-					case 2:
-						UpdateColorDepth4ScaledCopy(
-							top, left, bottom, right);
-						break;
-					case 4:
-						UpdateColorDepth5ScaledCopy(
-							top, left, bottom, right);
-						break;
-				}
-			} else
-#endif
 			{
 				switch (bpp) {
 					case 1:
@@ -655,24 +550,6 @@ LOCALPROC HaveChangedScreenBuff(ui4r top, ui4r left,
 		} else
 #endif
 		{
-#if EnableMagnify
-			if (UseMagnify) {
-				switch (bpp) {
-					case 1:
-						UpdateBWDepth3ScaledCopy(
-							top, left, bottom, right);
-						break;
-					case 2:
-						UpdateBWDepth4ScaledCopy(
-							top, left, bottom, right);
-						break;
-					case 4:
-						UpdateBWDepth5ScaledCopy(
-							top, left, bottom, right);
-						break;
-				}
-			} else
-#endif
 			{
 				switch (bpp) {
 					case 1:
@@ -699,13 +576,6 @@ LOCALPROC HaveChangedScreenBuff(ui4r top, ui4r left,
 				int j0 = j;
 				Uint8 *bufp = (Uint8 *)my_surface->pixels
 					+ i * my_surface->pitch + j * bpp;
-
-#if EnableMagnify
-				if (UseMagnify) {
-					i0 /= MyWindowScale;
-					j0 /= MyWindowScale;
-				}
-#endif
 
 #if 0 != vMacScreenDepth
 				if (UseColorMode) {
@@ -820,15 +690,7 @@ LOCALPROC ForceShowCursor(void)
 
 LOCALFUNC blnr MyMoveMouse(si4b h, si4b v)
 {
-#if EnableMagnify
-	if (UseMagnify) {
-		h *= MyWindowScale;
-		v *= MyWindowScale;
-	}
-#endif
-
 	SDL_WarpMouse(h, v);
-
 	return trueblnr;
 }
 
@@ -837,13 +699,6 @@ LOCALFUNC blnr MyMoveMouse(si4b h, si4b v)
 LOCALPROC MousePositionNotify(int NewMousePosh, int NewMousePosv)
 {
 	blnr ShouldHaveCursorHidden = trueblnr;
-
-#if EnableMagnify
-	if (UseMagnify) {
-		NewMousePosh /= MyWindowScale;
-		NewMousePosv /= MyWindowScale;
-	}
-#endif
 
 #if EnableFSMouseMotion
 	if (HaveMouseMotion) {
@@ -868,15 +723,6 @@ LOCALPROC MousePositionNotify(int NewMousePosh, int NewMousePosv)
 			NewMousePosv = vMacScreenHeight - 1;
 			ShouldHaveCursorHidden = falseblnr;
 		}
-
-#if VarFullScreen
-		if (UseFullScreen)
-#endif
-#if MayFullScreen
-		{
-			ShouldHaveCursorHidden = trueblnr;
-		}
-#endif
 
 		/* if (ShouldHaveCursorHidden || CurMouseButton) */
 		/*
@@ -1089,7 +935,7 @@ LOCALPROC DisconnectKeyCodes3(void)
 
 /* --- time, date, location --- */
 
-#define dbglog_TimeStuff (0 && dbglog_HAVE)
+#define dbglog_TimeStuff 0
 
 LOCALVAR ui5b TrueEmulatedTime = 0;
 
@@ -1217,8 +1063,8 @@ LOCALFUNC blnr InitLocationDat(void)
 #define kAllBuffMask (kAllBuffLen - 1)
 #define dbhBufferSize (kAllBuffSz + kOneBuffSz)
 
-#define dbglog_SoundStuff (0 && dbglog_HAVE)
-#define dbglog_SoundBuffStats (0 && dbglog_HAVE)
+#define dbglog_SoundStuff 0
+#define dbglog_SoundBuffStats 0
 
 LOCALVAR tpSoundSamp TheSoundBuffer = nullpr;
 volatile static ui4b ThePlayOffset;
@@ -1858,22 +1704,6 @@ LOCALFUNC blnr CreateMainWindow(void)
 	Uint32 flags = 0;//SDL_SWSURFACE;
 	blnr v = falseblnr;
 
-#if EnableMagnify && 1
-	if (UseMagnify) {
-		NewWindowHeight *= MyWindowScale;
-		NewWindowWidth *= MyWindowScale;
-	}
-#endif
-
-#if VarFullScreen
-	if (UseFullScreen)
-#endif
-#if MayFullScreen
-	{
-		flags |= SDL_FULLSCREEN;
-	}
-#endif
-
 	ViewHStart = 0;
 	ViewVStart = 0;
 	ViewHSize = vMacScreenWidth;
@@ -1899,45 +1729,9 @@ LOCALFUNC blnr CreateMainWindow(void)
 	return v;
 }
 
-#if EnableRecreateW
-LOCALFUNC blnr ReCreateMainWindow(void)
-{
-	ForceShowCursor(); /* hide/show cursor api is per window */
-
-#if MayFullScreen
-	if (GrabMachine) {
-		GrabMachine = falseblnr;
-		UngrabMachine();
-	}
-#endif
-
-#if EnableMagnify
-	UseMagnify = WantMagnify;
-#endif
-#if VarFullScreen
-	UseFullScreen = WantFullScreen;
-#endif
-
-	(void) CreateMainWindow();
-
-	if (HaveCursorHidden) {
-		(void) MyMoveMouse(CurMouseH, CurMouseV);
-	}
-
-	return trueblnr;
-}
-#endif
-
 LOCALPROC ZapWinStateVars(void)
 {
 }
-
-#if VarFullScreen
-LOCALPROC ToggleWantFullScreen(void)
-{
-	WantFullScreen = ! WantFullScreen;
-}
-#endif
 
 /* --- SavedTasks --- */
 
@@ -2028,35 +1822,6 @@ LOCALPROC CheckForSavedTasks(void)
 		MacMsgDisplayOn();
 	}
 
-#if EnableRecreateW
-	if (0
-#if EnableMagnify
-		|| (UseMagnify != WantMagnify)
-#endif
-#if VarFullScreen
-		|| (UseFullScreen != WantFullScreen)
-#endif
-		)
-	{
-		(void) ReCreateMainWindow();
-	}
-#endif
-
-#if MayFullScreen
-	if (GrabMachine != (
-#if VarFullScreen
-		UseFullScreen &&
-#endif
-		! (gTrueBackgroundFlag || CurSpeedStopped)))
-	{
-		GrabMachine = ! GrabMachine;
-		if (GrabMachine) {
-			GrabTheMachine();
-		} else {
-			UngrabMachine();
-		}
-	}
-#endif
 
 	if (NeedWholeScreenDraw) {
 		NeedWholeScreenDraw = falseblnr;
@@ -2195,9 +1960,6 @@ LOCALPROC ZapOSGLUVars(void)
 
 LOCALPROC ReserveAllocAll(void)
 {
-#if dbglog_HAVE
-	dbglog_ReserveAlloc();
-#endif
 	ReserveAllocOneBlock(&ROM, kROM_Size, 5, falseblnr);
 
 	ReserveAllocOneBlock(&screencomparebuff,
@@ -2251,9 +2013,6 @@ LOCALPROC UnallocMyMemory(void)
 LOCALFUNC blnr InitOSGLU(void)
 {
 	if (AllocMyMemory())
-#if dbglog_HAVE
-	if (dbglog_open())
-#endif
 	if (ScanCommandLine())
 	if (LoadMacRom())
 	if (LoadInitialImages())
@@ -2290,17 +2049,9 @@ LOCALPROC UnInitOSGLU(void)
 	UnInitPbufs();
 #endif
 	UnInitDrives();
-
 	ForceShowCursor();
-
-#if dbglog_HAVE
-	dbglog_close();
-#endif
-
 	UnallocMyMemory();
-
 	CheckSavedMacMsg();
-
 	SDL_Quit();
 }
 
